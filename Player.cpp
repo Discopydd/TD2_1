@@ -46,26 +46,28 @@ void Player::Update(MapChip& mapChip) {
     float nextX = x + velocityX;
     float nextY = y + velocityY;
 
-    // 处理碰撞检测
-     if (mapChip.CheckCollision(static_cast<int>(nextX + radius), static_cast<int>(y)) || 
-        mapChip.CheckCollision(static_cast<int>(nextX - radius), static_cast<int>(y))) {
-        // 如果碰撞，重置水平速度
-        velocityX = 0.0f;
-    } else {
-        // 如果没有碰撞，更新X位置
-        x = nextX;
+ // 处理四个角的组合碰撞
+    bool collisionTopRight = mapChip.CheckCollision(static_cast<int>(nextX + radius), static_cast<int>(nextY - radius));
+    bool collisionTopLeft = mapChip.CheckCollision(static_cast<int>(nextX - radius), static_cast<int>(nextY - radius));
+    bool collisionBottomRight = mapChip.CheckCollision(static_cast<int>(nextX + radius), static_cast<int>(nextY + radius));
+    bool collisionBottomLeft = mapChip.CheckCollision(static_cast<int>(nextX - radius), static_cast<int>(nextY + radius));
+
+    // 如果右上角或左上角发生碰撞，重置垂直速度
+    if (collisionTopRight || collisionTopLeft) {
+        velocityY = 0.0f;
     }
 
-    // 垂直方向碰撞检测
-    if (mapChip.CheckCollision(static_cast<int>(x), static_cast<int>(nextY + radius)) || 
-        mapChip.CheckCollision(static_cast<int>(x), static_cast<int>(nextY - radius))) {
-        // 如果碰撞，重置垂直速度
+    // 如果右下角或左下角发生碰撞，重置水平速度
+    if (collisionBottomRight || collisionBottomLeft) {
+        velocityX = 0.0f;
         velocityY = 0.0f;
-    } else {
-        // 如果没有碰撞，更新Y位置
+    }
+
+    // 如果没有碰撞，更新位置
+    if (!collisionTopRight && !collisionTopLeft && !collisionBottomRight && !collisionBottomLeft) {
+        x = nextX;
         y = nextY;
     }
-
 
     // 添加重力效果
     velocityY += 0.5f;
@@ -96,7 +98,7 @@ void Player::Jump() {
 void Player::SwingLine() {
     // 让红线的角度在一定范围内摆动
     lineAngle += swingSpeed;
-    if (lineAngle > 1.0f || lineAngle < -1.0f) {
+    if (lineAngle > 0.5f || lineAngle < -0.5f) {
         swingSpeed = -swingSpeed;  // 当到达极限角度时，反转摆动方向
     }
 }
