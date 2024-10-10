@@ -1,9 +1,9 @@
 #pragma once
 #include <Novice.h>
 #include <math.h>
-
+#include "MapChip.h"
 class Player {
-public:
+private:
     float x, y;          // 玩家的位置
     float radius;        // 圆的半径
     unsigned int color;  // 圆的颜色
@@ -19,9 +19,12 @@ public:
     float lastSwingAngle; // 记录最后的摆动角度
     bool isSwingStopped; // 红线是否已停止摆动
     bool shouldDrawLine; // 控制红线是否被绘制
+
+public:
+    
     Player();
 
-    void Update();
+    void Update(MapChip& mapChip);
     void Draw();
     void Jump();
     void SwingLine();

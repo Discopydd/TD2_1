@@ -1,15 +1,15 @@
 #include "Player.h"
 
 Player::Player()
-    : x(360.0f), y(360.0f), radius(30.0f), color(WHITE),  
+    : x(360.0f), y(380.0f), radius(16.0f), color(WHITE),  
       jumpCharge(0.0f), isCharging(false), maxJumpCharge(13.0f), 
       jumpSpeed(5.0f), velocityX(0.0f), velocityY(0.0f), 
       lineAngle(0.0f), isSwinging(false), swingSpeed(0.02f), 
       lastSwingAngle(0.0f), isSwingStopped(false), shouldDrawLine(false) {}
 
-void Player::Update() {
-    bool isOnGround = (y >= 720 - radius);
-   if (Novice::CheckHitKey(DIK_SPACE) && !isCharging && isOnGround && !isSwinging && !isSwingStopped) {
+void Player::Update(MapChip& mapChip) {
+
+   if (Novice::CheckHitKey(DIK_SPACE) && !isCharging  && !isSwinging && !isSwingStopped) {
         isSwinging = true;  
         lineAngle = -0.5f;  // 开始摆动
         shouldDrawLine = true; // 开始绘制红线
@@ -21,7 +21,7 @@ void Player::Update() {
         lastSwingAngle = lineAngle; // 记录当前摆动角度
     } 
     // 第二次按下空格键，蓄力跳跃
-    else if (Novice::CheckHitKey(DIK_SPACE) && isSwingStopped && !isCharging && isOnGround) {
+    else if (Novice::CheckHitKey(DIK_SPACE) && isSwingStopped && !isCharging ) {
         isCharging = true;
         jumpCharge = 0.0f;
     }
@@ -42,18 +42,33 @@ void Player::Update() {
         isSwingStopped = false; // 重置摆动状态
     }
 
-    // 更新玩家位置和重力
-    x += velocityX;
-    y += velocityY;
-    velocityY += 0.5f;
+      // 更新玩家位置
+    float nextX = x + velocityX;
+    float nextY = y + velocityY;
 
-    // 碰撞检测
-    if (y > 720 - radius) {
-        y = 720 - radius;
-        velocityY = 0.0f;
+    // 处理碰撞检测
+     if (mapChip.CheckCollision(static_cast<int>(nextX + radius), static_cast<int>(y)) || 
+        mapChip.CheckCollision(static_cast<int>(nextX - radius), static_cast<int>(y))) {
+        // 如果碰撞，重置水平速度
         velocityX = 0.0f;
+    } else {
+        // 如果没有碰撞，更新X位置
+        x = nextX;
     }
 
+    // 垂直方向碰撞检测
+    if (mapChip.CheckCollision(static_cast<int>(x), static_cast<int>(nextY + radius)) || 
+        mapChip.CheckCollision(static_cast<int>(x), static_cast<int>(nextY - radius))) {
+        // 如果碰撞，重置垂直速度
+        velocityY = 0.0f;
+    } else {
+        // 如果没有碰撞，更新Y位置
+        y = nextY;
+    }
+
+
+    // 添加重力效果
+    velocityY += 0.5f;
     // 如果正在摆动红线，更新角度
     if (isSwinging) {
         SwingLine();
