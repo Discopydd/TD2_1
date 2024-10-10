@@ -16,6 +16,9 @@ public:
      float lineAngle;     // 红线的角度，用于控制摆动
     bool isSwinging;     // 红线是否在摆动
     float swingSpeed;    // 红线的摆动速度
+    float lastSwingAngle; // 记录最后的摆动角度
+    bool isSwingStopped; // 红线是否已停止摆动
+    bool shouldDrawLine; // 控制红线是否被绘制
     Player();
 
     void Update();
