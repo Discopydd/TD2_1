@@ -11,7 +11,6 @@ void Player::Update(MapChip& mapChip) {
 
    if (Novice::CheckHitKey(DIK_SPACE) && !isCharging  && !isSwinging && !isSwingStopped) {
         isSwinging = true;  
-        lineAngle = -0.5f;  // 开始摆动
         shouldDrawLine = true; // 开始绘制红线
     } 
     // 停止摆动
@@ -63,14 +62,50 @@ void Player::Update(MapChip& mapChip) {
         velocityY = 0.0f;
     }
 
-    // 如果没有碰撞，更新位置
+    // 添加重力效果
+    bool isOnPlatform = false;
+
+    // 检测平台的碰撞
+    for (auto& platform : mapChip.platforms) {
+        if (velocityY > 0) {
+            bool collisionX = nextX + radius > platform.x && nextX - radius < platform.x + platform.width;
+            bool collisionY = nextY + radius > platform.y && y + radius <= platform.y;
+
+            if (collisionX && collisionY) {
+                isOnPlatform = true;
+                velocityY = 0.0f;
+                velocityX = 0.0f;
+                nextY = platform.y - radius;
+               if (platform.velocityX > 0) {
+            nextX += platform.velocityX+2;
+        } 
+        // 如果平台向左移动，减少玩家的X坐标
+        else if (platform.velocityX < 0) {
+            nextX += platform.velocityX-2; 
+        }
+                break;
+            }
+        }
+        if (velocityY < 0) {
+        bool collisionX = nextX + radius > platform.x && nextX - radius < platform.x + platform.width;
+        bool collisionYBottom = nextY - radius < platform.y + platform.height && y - radius >= platform.y + platform.height;
+
+        // 如果玩家的头部撞到平台的底部，则停止上升
+        if (collisionX && collisionYBottom) {
+            velocityY = 0.0f;  // 停止玩家上升
+            nextY = platform.y + platform.height + radius;  // 调整玩家位置到平台底部以下
+        }
+    }
+    }
+
+    if (!isOnPlatform) {
+        velocityY += 0.5f;  // 添加重力效果
+    }
+      // 如果没有碰撞，更新位置
     if (!collisionTopRight && !collisionTopLeft && !collisionBottomRight && !collisionBottomLeft) {
         x = nextX;
         y = nextY;
     }
-
-    // 添加重力效果
-    velocityY += 0.5f;
     // 如果正在摆动红线，更新角度
     if (isSwinging) {
         SwingLine();

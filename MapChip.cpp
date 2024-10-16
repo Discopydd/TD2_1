@@ -2,20 +2,56 @@
 
 MapChip::MapChip() {}
 
+Platform::Platform(float x, float y, float width, float height, float velocityX, float velocityY, float range, bool moveVertical)
+    : x(x), y(y), width(width), height(height), velocityX(velocityX), velocityY(velocityY), range(range), moveVertical(moveVertical) {
+    startX = x; // 记录平台的初始水平位置
+    startY = y; // 记录平台的初始垂直位置
+}
+
+
+void Platform::Update() {
+  if (moveVertical) {
+        y += velocityY;
+        // 检查平台是否超出垂直移动范围
+        if (y < startY - range || y > startY + range) {
+            velocityY = -velocityY; // 反转垂直方向
+        }
+    } else {
+        x += velocityX;
+        // 检查平台是否超出水平移动范围
+        if (x < startX - range || x > startX + range) {
+            velocityX = -velocityX; // 反转水平方向
+        }
+    }
+}
+
+void Platform::Draw() {
+    Novice::DrawBox(static_cast<int>(x), static_cast<int>(y), static_cast<int>(width), static_cast<int>(height), 0.0f, BLUE, kFillModeSolid);
+}
+
 void MapChip::LoadMap(const std::string& filename) {
     std::ifstream file(filename);
     std::string line;
-    mapData.clear(); // 清空旧数据
+    mapData.clear();
+    platforms.clear();
 
-    while (std::getline(file, line)) {
-        std::vector<int> row;
+    for (size_t row = 0; std::getline(file, line); ++row) {
+        std::vector<int> mapRow;
         std::stringstream ss(line);
         std::string tile;
 
-        while (std::getline(ss, tile, ',')) {
-            row.push_back(std::stoi(tile)); // 将字符串转换为整数
+        for (size_t col = 0; std::getline(ss, tile, ','); ++col) {
+            int tileValue = std::stoi(tile);
+            mapRow.push_back(tileValue);
+
+            if (tileValue == 2) {
+                platforms.emplace_back(col * 32.0f, row * 32.0f, 32.0f, 32.0f, 2.0f,0.0f,128.0f,false);
+            }
+            if (tileValue == 3) {
+                platforms.emplace_back(col * 32.0f, row * 32.0f, 32.0f, 32.0f, 0.0f, 2.0f, 128.0f, true);
+            }
         }
-        mapData.push_back(row);
+        mapData.push_back(mapRow);
     }
 }
 
@@ -23,7 +59,6 @@ void MapChip::DrawMap() {
     for (size_t row = 0; row < mapData.size(); ++row) {
         for (size_t col = 0; col < mapData[row].size(); ++col) {
             if (mapData[row][col] == 1) {
-                // 在地图上绘制方块，假设每个 tile 的大小为 32
                 Novice::DrawBox(static_cast<int>(col * 32), static_cast<int>(row * 32), 32, 32, 0.0f, BLACK, kFillModeSolid);
             }
         }
@@ -31,15 +66,24 @@ void MapChip::DrawMap() {
 }
 
 bool MapChip::CheckCollision(int nextX, int nextY) {
-    // 确定玩家的网格位置
-    int gridX = nextX / 32; // tile size 为 32
+    int gridX = nextX / 32;
     int gridY = nextY / 32;
 
-    // 检查是否在地图范围内
     if (gridX < 0 || gridX >= mapData[0].size() || gridY < 0 || gridY >= mapData.size()) {
-        return true; // 超出地图范围
+        return true;
     }
 
-    // 检查是否与地图的障碍物碰撞（假设 1 表示障碍物）
     return mapData[gridY][gridX] == 1;
+}
+
+void MapChip::UpdatePlatforms() {
+    for (auto& platform : platforms) {
+        platform.Update();
+    }
+}
+
+void MapChip::DrawPlatforms() {
+    for (auto& platform : platforms) {
+        platform.Draw();
+    }
 }

@@ -33,6 +33,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		player.Update(mapChip);
 
+		mapChip.UpdatePlatforms(); 
+
 		///
 		/// ↑更新処理ここまで
 		///
@@ -41,6 +43,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		 player.Draw();
+		  mapChip.DrawPlatforms(); 
 		 mapChip.DrawMap();
 		/// 
 		/// ↑描画処理ここまで
