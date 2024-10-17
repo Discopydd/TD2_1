@@ -43,8 +43,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		 player.Draw();
-		  mapChip.DrawPlatforms(); 
-		 mapChip.DrawMap();
+		 mapChip.DrawPlatforms(player.cameraOffsetX, player.cameraOffsetY);
+         mapChip.DrawMap(player.cameraOffsetX, player.cameraOffsetY);
 		/// 
 		/// ↑描画処理ここまで
 		///

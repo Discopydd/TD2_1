@@ -1,14 +1,14 @@
 #include "Player.h"
 
 Player::Player()
-    : x(360.0f), y(380.0f), radius(16.0f), color(WHITE),  
-      jumpCharge(0.0f), isCharging(false), maxJumpCharge(13.0f), 
+    : x(1360.0f), y(780.0f), radius(16.0f), color(WHITE),  
+      jumpCharge(0.0f), isCharging(false), maxJumpCharge(25.0f), 
       jumpSpeed(5.0f), velocityX(0.0f), velocityY(0.0f), 
       lineAngle(0.0f), isSwinging(false), swingSpeed(0.02f), 
-      lastSwingAngle(0.0f), isSwingStopped(false), shouldDrawLine(false) {}
+      lastSwingAngle(0.0f), isSwingStopped(false), shouldDrawLine(false) , cameraOffsetX(0.0f), cameraOffsetY(0.0f) {}
 
 void Player::Update(MapChip& mapChip) {
-
+    velocityY += 0.5f;
    if (Novice::CheckHitKey(DIK_SPACE) && !isCharging  && !isSwinging && !isSwingStopped) {
         isSwinging = true;  
         shouldDrawLine = true; // 开始绘制红线
@@ -44,6 +44,26 @@ void Player::Update(MapChip& mapChip) {
       // 更新玩家位置
     float nextX = x + velocityX;
     float nextY = y + velocityY;
+    int screenWidth = 1980;
+    int screenHeight = 1080;
+    int mapWidth = mapChip.GetMapWidth();  // 获取地图宽度，单位为像素
+    int mapHeight = mapChip.GetMapHeight(); // 获取地图高度，单位为像素
+
+    // 计算摄像机的偏移量，使其跟随玩家，但加上左右和底部限制
+    cameraOffsetX = nextX - screenWidth / 2;
+    cameraOffsetY = nextY - screenHeight / 2;
+    // 限制左右范围，确保摄像机不超出地图边界
+if (cameraOffsetX < 0.0f) {
+    cameraOffsetX = 0.0f;  // 限制在地图左侧
+} else if (cameraOffsetX > static_cast<float>(mapWidth - screenWidth)) {
+    cameraOffsetX = static_cast<float>(mapWidth - screenWidth);  // 限制在地图右侧
+}
+
+// 限制底部范围，确保摄像机不会超出地图底部
+if (cameraOffsetY > static_cast<float>(mapHeight - screenHeight)) {
+    cameraOffsetY = static_cast<float>(mapHeight - screenHeight);  // 限制在地图底部
+}
+
 
  // 处理四个角的组合碰撞
     bool collisionTopRight = mapChip.CheckCollision(static_cast<int>(nextX + radius), static_cast<int>(nextY - radius));
@@ -62,45 +82,38 @@ void Player::Update(MapChip& mapChip) {
         velocityY = 0.0f;
     }
 
-    // 添加重力效果
-    bool isOnPlatform = false;
+
 
     // 检测平台的碰撞
     for (auto& platform : mapChip.platforms) {
-        if (velocityY > 0) {
-            bool collisionX = nextX + radius > platform.x && nextX - radius < platform.x + platform.width;
-            bool collisionY = nextY + radius > platform.y && y + radius <= platform.y;
+        // 检测右上角和左上角是否与平台碰撞
+        bool collisionTopRightPlatform = platform.CheckCollision(nextX, nextY, radius);
+        bool collisionTopLeftPlatform = platform.CheckCollision(nextX, nextY, radius);
 
-            if (collisionX && collisionY) {
-                isOnPlatform = true;
-                velocityY = 0.0f;
-                velocityX = 0.0f;
-                nextY = platform.y - radius;
-               if (platform.velocityX > 0) {
-            nextX += platform.velocityX+2;
-        } 
-        // 如果平台向左移动，减少玩家的X坐标
-        else if (platform.velocityX < 0) {
-            nextX += platform.velocityX-2; 
-        }
-                break;
-            }
-        }
-        if (velocityY < 0) {
-        bool collisionX = nextX + radius > platform.x && nextX - radius < platform.x + platform.width;
-        bool collisionYBottom = nextY - radius < platform.y + platform.height && y - radius >= platform.y + platform.height;
 
-        // 如果玩家的头部撞到平台的底部，则停止上升
-        if (collisionX && collisionYBottom) {
-            velocityY = 0.0f;  // 停止玩家上升
-            nextY = platform.y + platform.height + radius;  // 调整玩家位置到平台底部以下
-        }
+        bool collisionBottomRightPlatform = platform.CheckCollision(nextX, nextY, radius);
+        bool collisionBottomLeftPlatform = platform.CheckCollision(nextX, nextY, radius);
+
+        // 如果左下角或右下角与平台发生碰撞，跟随平台移动
+        if (collisionBottomRightPlatform || collisionBottomLeftPlatform) {
+            velocityY = 0.0f;  // 垂直速度归零
+             velocityX = 0.0f;
+            // 玩家跟随平台的移动
+          if (platform.velocityX > 0.0f) {
+        nextX += 2.0f;  // 当平台向右移动时，调整玩家的 x 坐标
+    } else if (platform.velocityX < 0.0f) {
+        nextX -= 2.0f;  // 当平台向左移动时，调整玩家的 x 坐标
     }
+            nextY += platform.velocityY; // 平台的垂直速度影响玩家的位置
+        }
+
+        if (collisionTopRightPlatform || collisionTopLeftPlatform) {
+            velocityY = 0.0f;  // 垂直速度归零
+            nextY = y;  // 防止玩家继续上升
+        }
+         
     }
 
-    if (!isOnPlatform) {
-        velocityY += 0.5f;  // 添加重力效果
-    }
       // 如果没有碰撞，更新位置
     if (!collisionTopRight && !collisionTopLeft && !collisionBottomRight && !collisionBottomLeft) {
         x = nextX;
@@ -114,14 +127,14 @@ void Player::Update(MapChip& mapChip) {
 
 void Player::Draw() {
     // 绘制玩家为一个圆
-    Novice::DrawEllipse(static_cast<int>(x), static_cast<int>(y), static_cast<int>(radius), static_cast<int>(radius), 0.0f, color, kFillModeSolid);
+    Novice::DrawEllipse(static_cast<int>(x - cameraOffsetX), static_cast<int>(y - cameraOffsetY), static_cast<int>(radius), static_cast<int>(radius), 0.0f, color, kFillModeSolid);
      if (shouldDrawLine) {
         // 计算红线终点的位置
         float lineLength = 100.0f;  // 红线的长度
         float endX = x + lineLength * static_cast<float>((sin(lineAngle)));
         float endY = y - lineLength * static_cast<float>((cos(lineAngle)));
 
-        Novice::DrawLine(static_cast<int>(x), static_cast<int>(y), static_cast<int>(endX), static_cast<int>(endY), RED);
+        Novice::DrawLine(static_cast<int>(x- cameraOffsetX), static_cast<int>(y- cameraOffsetY), static_cast<int>(endX- cameraOffsetX), static_cast<int>(endY- cameraOffsetY), RED);
     }
 }
 

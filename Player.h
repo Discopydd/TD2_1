@@ -19,9 +19,9 @@ private:
     float lastSwingAngle; // 记录最后的摆动角度
     bool isSwingStopped; // 红线是否已停止摆动
     bool shouldDrawLine; // 控制红线是否被绘制
-
+   
 public:
-    
+     float cameraOffsetX, cameraOffsetY;
     Player();
 
     void Update(MapChip& mapChip);
