@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <Novice.h>
+#include<math.h>
 
 class Platform {
 public:
@@ -25,19 +26,22 @@ public:
     std::vector<std::vector<int>> mapData; // 存储地图数据
     std::vector<Platform> platforms; // 存储平台数据
     int blockTextureHandle;
+    int kumoTextureHandle;
+    int damageTextureHandle;
 
     MapChip();
     ~MapChip();
     void LoadMap(const std::string& filename);
     void DrawMap(float cameraOffsetX, float cameraOffsetY);
     bool CheckCollision(int nextX, int nextY);
+    bool CheckDangerCollision(int nextX, int nextY);
     void UpdatePlatforms();
     void DrawPlatforms(float cameraOffsetX, float cameraOffsetY);
      int GetMapWidth() const {
-        return static_cast<int>(mapData[0].size()) * 128;
+        return static_cast<int>(mapData[0].size()) * 64;
     }
 
     int GetMapHeight() const {
-       return static_cast<int>(mapData.size()) * 64;
+       return static_cast<int>(mapData.size()) * 32;
     }
 };

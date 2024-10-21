@@ -19,10 +19,22 @@ private:
     float lastSwingAngle; // 记录最后的摆动角度
     bool isSwingStopped; // 红线是否已停止摆动
     bool shouldDrawLine; // 控制红线是否被绘制
-   
+     bool isJumping; // 表示是否正在跳跃
+
+     int textureHandle;    // 纹理句柄
+    int frameIndex;       // 当前帧索引
+    int frameWidth, frameHeight;  // 每帧的宽度和高度
+    float animationTimer; // 动画计时器
+    float animationSpeed; // 动画速度
+    int fanTextureHandle;    // 纹理句柄
+     int changeTextureHandle;    // 纹理句柄
+    
 public:
      float cameraOffsetX, cameraOffsetY;
+     bool playerLife;
+     float cooldownTimer;
     Player();
+    ~Player();
 
     void Update(MapChip& mapChip);
     void Draw();
